@@ -164,7 +164,5 @@ public class BookingServiceImpl implements BookingService {
         if (!start.isBefore(end)) {
             throw new ValidationException("End date must be after start date");
         }
-        if (!start.isAfter(LocalDateTime.now())) {
-        }
     }
 }
