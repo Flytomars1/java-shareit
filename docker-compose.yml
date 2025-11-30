@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: shareit-postgres
+    environment:
+      POSTGRES_DB: shareit
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: 12345
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_shareit:/var/lib/postgresql/data
+
+volumes:
+  pgdata_shareit:

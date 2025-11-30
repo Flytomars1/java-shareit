@@ -1,30 +1,29 @@
 package ru.practicum.shareit.user.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.exception.EmailAlreadyExistsException;
-import ru.practicum.shareit.user.exception.ValidationException;
+import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
-
-    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @Override
+    @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {
         log.info("Запрос на получение всех пользователей");
         return userRepository.findAll().stream()
@@ -33,22 +32,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDto getUserById(Long id) {
-        log.info("Запрос на получение пользователя с id={}", id);
+        log.info("Запрос пользователя с id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Попытка получить несуществующего пользователя с id={}", id);
-                    return new ValidationException("User not found");
+                    log.warn("Пользователь с id={} не найден", id);
+                    return new NotFoundException("User not found");
                 });
         return UserMapper.toUserDto(user);
     }
 
     @Override
+    @Transactional
     public UserDto createUser(UserDto userDto) {
-        log.info("Попытка создания пользователя: name='{}', email='{}'",
-                userDto.getName(), userDto.getEmail());
-        validateUser(userDto);
-        checkEmailUnique(null, userDto.getEmail());
+        log.info("Создание пользователя: email='{}'", userDto.getEmail());
+        validateEmail(userDto.getEmail());
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            log.warn("Email '{}' уже существует", userDto.getEmail());
+            throw new EmailAlreadyExistsException(userDto.getEmail());
+        }
         User user = UserMapper.toUser(userDto);
         User savedUser = userRepository.save(user);
         log.info("Пользователь создан с id={}", savedUser.getId());
@@ -56,78 +59,61 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDto updateUser(Long id, UserDto userDto) {
-        log.info("Попытка обновления пользователя с id={}", id);
+        log.info("Обновление пользователя с id={}", id);
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.warn("Попытка обновить несуществующего пользователя с id={}", id);
-                    return new ValidationException("User not found");
+                    log.warn("Пользователь с id={} не найден", id);
+                    return new NotFoundException("User not found");
                 });
 
         if (userDto.getName() != null) {
             existingUser.setName(userDto.getName());
-            log.debug("Имя пользователя id={} обновлено на '{}'", id, userDto.getName());
         }
 
         if (userDto.getEmail() != null) {
             String newEmail = userDto.getEmail().trim();
             if (newEmail.isBlank()) {
-                log.warn("Попытка установить пустой email для пользователя id={}", id);
                 throw new ValidationException("Email must not be blank");
             }
             validateEmail(newEmail);
 
             if (!newEmail.equals(existingUser.getEmail())) {
-                checkEmailUnique(id, newEmail);
+                if (userRepository.existsByEmail(newEmail)) {
+                    log.warn("Попытка смены email на уже занятый: {}", newEmail);
+                    throw new EmailAlreadyExistsException(newEmail);
+                }
                 existingUser.setEmail(newEmail);
-                log.debug("Email пользователя id={} обновлён на '{}'", id, newEmail);
             }
         }
 
         User updatedUser = userRepository.save(existingUser);
-        log.info("Пользователь с id={} успешно обновлён", id);
+        log.info("Пользователь с id={} обновлён", id);
         return UserMapper.toUserDto(updatedUser);
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
-        log.info("Попытка удаления пользователя с id={}", id);
+        log.info("Удаление пользователя с id={}", id);
         if (!userRepository.existsById(id)) {
             log.warn("Попытка удалить несуществующего пользователя с id={}", id);
-            throw new ValidationException("User not found");
+            throw new NotFoundException("User not found");
         }
         userRepository.deleteById(id);
-        log.info("Пользователь с id={} успешно удалён", id);
+        log.info("Пользователь с id={} удалён", id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean userExists(Long userId) {
         return userRepository.existsById(userId);
-    }
-
-    private void validateUser(UserDto userDto) {
-        if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
-            throw new ValidationException("Email must not be blank");
-        }
-        validateEmail(userDto.getEmail());
     }
 
     private void validateEmail(String email) {
         if (!email.matches("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$")) {
             throw new ValidationException("Invalid email format: " + email);
-        }
-    }
-
-    private void checkEmailUnique(Long userId, String email) {
-        if (userRepository.existsByEmail(email)) {
-            if (userId == null) {
-                throw new EmailAlreadyExistsException(email);
-            }
-            for (User user : userRepository.findAll()) {
-                if (email.equals(user.getEmail()) && !userId.equals(user.getId())) {
-                    throw new EmailAlreadyExistsException(email);
-                }
-            }
         }
     }
 }

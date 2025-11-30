@@ -1,25 +1,25 @@
 package ru.practicum.shareit.item;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/items")
+@RequiredArgsConstructor
+@Slf4j
 public class ItemController {
 
-    private static final Logger log = LoggerFactory.getLogger(ItemController.class);
     private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     private final ItemService itemService;
-
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
 
     @PostMapping
     public ItemDto create(@RequestHeader(USER_ID_HEADER) Long userId,
@@ -45,13 +45,14 @@ public class ItemController {
     public ItemDto getItem(@PathVariable Long itemId,
                            @RequestHeader(value = USER_ID_HEADER, required = false) Long userId) {
         log.info("Получен GET-запрос на /items/{} от пользователя с id={}", itemId, userId);
+
         return itemService.findById(itemId, userId != null ? userId : -1L);
     }
 
     @GetMapping
     public List<ItemDto> getOwnerItems(@RequestHeader(USER_ID_HEADER) Long userId) {
         log.info("Получен GET-запрос на /items от владельца с id={}", userId);
-        return itemService.findByOwnerId(userId);
+        return itemService.getOwnerItems(userId);
     }
 
     @GetMapping("/search")
@@ -59,5 +60,17 @@ public class ItemController {
                                      @RequestHeader(value = USER_ID_HEADER, required = false) Long userId) {
         log.info("Получен GET-запрос на /items/search с text='{}' от пользователя с id={}", text, userId);
         return itemService.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@RequestHeader(USER_ID_HEADER) Long userId,
+                                 @PathVariable Long itemId,
+                                 @RequestBody Map<String, String> request) {
+        String text = request.get("text");
+        if (text == null || text.isBlank()) {
+            throw new ValidationException("Text is required");
+        }
+        log.info("Получен POST-запрос на /items/{}/comment от пользователя id={}: text='{}'", itemId, userId, text);
+        return itemService.addComment(itemId, userId, text);
     }
 }
