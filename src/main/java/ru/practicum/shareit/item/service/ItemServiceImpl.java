@@ -172,7 +172,7 @@ public class ItemServiceImpl implements ItemService {
             dto.setNextBooking(null);
         }
 
-        dto.setComments(loadCommentsForItem(item.getId()));
+        dto.setComments(commentRepository.findCommentDtosByItemId(item.getId()));
 
         return dto;
     }
@@ -196,21 +196,6 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getAvailable() == null) {
             throw new RuntimeException("Item availability must be specified");
         }
-    }
-
-    private List<CommentDto> loadCommentsForItem(Long itemId) {
-        return commentRepository.findByItemIdOrderById(itemId).stream()
-                .map(comment -> {
-                    User author = userRepository.findById(comment.getAuthorId())
-                            .orElseThrow(() -> new RuntimeException("Author not found"));
-                    CommentDto dto = new CommentDto();
-                    dto.setId(comment.getId());
-                    dto.setText(comment.getText());
-                    dto.setAuthorName(author.getName());
-                    dto.setCreated(comment.getCreated());
-                    return dto;
-                })
-                .collect(Collectors.toList());
     }
 
     private boolean hasUserBookedAndFinishedItem(Long userId, Long itemId, LocalDateTime now) {
