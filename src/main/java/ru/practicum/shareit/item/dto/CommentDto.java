@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 @Data
 public class CommentDto {
 
-    public CommentDto() {}
+    public CommentDto() {
+    }
 
     public CommentDto(Long id, String text, String authorName, LocalDateTime created) {
         this.id = id;
