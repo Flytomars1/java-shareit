@@ -7,11 +7,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.itemrequest.dto.ItemRequestDto;
 import ru.practicum.shareit.itemrequest.model.ItemRequest;
 import ru.practicum.shareit.itemrequest.repository.ItemRequestRepository;
 import ru.practicum.shareit.itemrequest.service.ItemRequestServiceImpl;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
@@ -220,6 +222,53 @@ class ItemRequestServiceTest {
         when(itemRequestRepository.findById(requestId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> itemRequestService.getRequestById(requestId, userId));
+        verify(userService).userExists(userId);
+        verify(itemRequestRepository).findById(requestId);
+    }
+
+    @Test
+    void getAllRequests_ShouldReturnAllRequests_WhenUserExists() {
+        Long userId = 1L;
+
+        ItemRequest request1 = new ItemRequest();
+        request1.setId(1L);
+        request1.setDescription("Request 1");
+        request1.setRequesterId(2L);
+
+        ItemRequest request2 = new ItemRequest();
+        request2.setId(2L);
+        request2.setDescription("Request 2");
+        request2.setRequesterId(3L);
+
+        when(userService.userExists(userId)).thenReturn(true);
+        when(itemRequestRepository.findByRequesterIdNotOrderByIdDesc(userId)).thenReturn(List.of(request1, request2));
+        when(itemRepository.findByRequestIdOrderById(1L)).thenReturn(List.of());
+        when(itemRepository.findByRequestIdOrderById(2L)).thenReturn(List.of());
+
+        List<ItemRequestDto> result = itemRequestService.getAllRequests(userId, 0, 20);
+
+        assertEquals(2, result.size());
+        verify(userService).userExists(userId);
+        verify(itemRequestRepository).findByRequesterIdNotOrderByIdDesc(userId);
+    }
+
+    @Test
+    void getRequestById_ShouldReturnRequest_WhenUserExists() {
+        Long requestId = 1L;
+        Long userId = 1L;
+
+        ItemRequest request = new ItemRequest();
+        request.setId(requestId);
+        request.setDescription("Request description");
+        request.setRequesterId(2L);
+
+        when(userService.userExists(userId)).thenReturn(true);
+        when(itemRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+        when(itemRepository.findByRequestIdOrderById(requestId)).thenReturn(List.of());
+
+        ItemRequestDto result = itemRequestService.getRequestById(requestId, userId);
+
+        assertEquals("Request description", result.getDescription());
         verify(userService).userExists(userId);
         verify(itemRequestRepository).findById(requestId);
     }

@@ -4,8 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -244,6 +247,7 @@ class ItemServiceTest {
         Long itemId = 1L;
         Long userId = 1L;
         String text = "Great item!";
+
         Item item = new Item();
         item.setId(itemId);
         item.setOwnerId(2L);
@@ -256,6 +260,13 @@ class ItemServiceTest {
         savedComment.setId(1L);
         savedComment.setText(text);
         savedComment.setCreated(LocalDateTime.now());
+
+        Booking booking = new Booking();
+        booking.setId(1L);
+        booking.setBookerId(userId);
+        booking.setItemId(itemId);
+        booking.setStatus(Status.APPROVED);
+        booking.setEnd(LocalDateTime.now().minusHours(1)); // Завершено
 
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(bookingRepository.existsByBookerIdAndItemIdAndStatusAndEndBefore(anyLong(), anyLong(), any(), any(LocalDateTime.class)))
@@ -324,5 +335,107 @@ class ItemServiceTest {
         assertThrows(ValidationException.class, () -> itemService.addComment(itemId, userId, text));
         verify(itemRepository).findById(itemId);
         verify(bookingRepository).existsByBookerIdAndItemIdAndStatusAndEndBefore(anyLong(), anyLong(), any(), any(LocalDateTime.class));
+    }
+
+    @Test
+    void create_ShouldThrowValidationException_WhenItemNameIsNull() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName(null);
+        itemDto.setDescription("Test description");
+        itemDto.setAvailable(true);
+
+        assertThrows(ValidationException.class, () -> itemService.create(itemDto, 1L));
+    }
+
+    @Test
+    void create_ShouldThrowValidationException_WhenItemNameIsBlank() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("   ");
+        itemDto.setDescription("Test description");
+        itemDto.setAvailable(true);
+
+        assertThrows(ValidationException.class, () -> itemService.create(itemDto, 1L));
+    }
+
+    @Test
+    void create_ShouldThrowValidationException_WhenItemDescriptionIsNull() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test name");
+        itemDto.setDescription(null);
+        itemDto.setAvailable(true);
+
+        assertThrows(ValidationException.class, () -> itemService.create(itemDto, 1L));
+    }
+
+    @Test
+    void create_ShouldThrowValidationException_WhenItemAvailableIsNull() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test name");
+        itemDto.setDescription("Test description");
+        itemDto.setAvailable(null);
+
+        assertThrows(ValidationException.class, () -> itemService.create(itemDto, 1L));
+    }
+
+    @Test
+    void update_ShouldUpdateItem_WhenItemNameIsNotBlank() {
+        Long itemId = 1L;
+        Long userId = 1L;
+
+        Item existingItem = new Item();
+        existingItem.setId(itemId);
+        existingItem.setOwnerId(userId);
+        existingItem.setName("Old Name");
+        existingItem.setDescription("Old Description");
+        existingItem.setAvailable(true);
+
+        ItemDto updateDto = new ItemDto();
+        updateDto.setName("New Name");
+
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(existingItem));
+        when(itemRepository.save(any(Item.class))).thenReturn(existingItem);
+
+        ItemDto result = itemService.update(itemId, updateDto, userId);
+
+        assertEquals("New Name", result.getName());
+        verify(itemRepository).findById(itemId);
+        verify(itemRepository).save(any(Item.class));
+    }
+
+    @Test
+    void create_ShouldThrowValidationException_WhenItemDescriptionIsBlank() {
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Test Name");
+        itemDto.setDescription("   ");
+        itemDto.setAvailable(true);
+
+        assertThrows(ValidationException.class, () -> itemService.create(itemDto, 1L));
+
+        verify(itemRepository, never()).save(any(Item.class));
+    }
+
+    @Test
+    void update_ShouldUpdateItem_WhenAvailableIsNull() {
+        Long itemId = 1L;
+        Long userId = 1L;
+
+        Item existingItem = new Item();
+        existingItem.setId(itemId);
+        existingItem.setOwnerId(userId);
+        existingItem.setName("Old Name");
+        existingItem.setDescription("Old Description");
+        existingItem.setAvailable(true);
+
+        ItemDto updateDto = new ItemDto();
+        updateDto.setAvailable(null);
+
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(existingItem));
+        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ItemDto result = itemService.update(itemId, updateDto, userId);
+
+        assertEquals(true, result.getAvailable());
+        verify(itemRepository).findById(itemId);
+        verify(itemRepository).save(any(Item.class));
     }
 }
