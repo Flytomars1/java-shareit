@@ -7,13 +7,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.itemrequest.dto.ItemRequestDto;
 import ru.practicum.shareit.itemrequest.model.ItemRequest;
 import ru.practicum.shareit.itemrequest.repository.ItemRequestRepository;
 import ru.practicum.shareit.itemrequest.service.ItemRequestServiceImpl;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
