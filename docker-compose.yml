@@ -1,15 +1,32 @@
 services:
-  postgres:
+  db:
     image: postgres:15
-    container_name: shareit-postgres
     environment:
       POSTGRES_DB: shareit
       POSTGRES_USER: dbuser
       POSTGRES_PASSWORD: 12345
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata_shareit:/var/lib/postgresql/data
 
-volumes:
-  pgdata_shareit:
+  server:
+    build:
+      context: server
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/shareit
+      SPRING_DATASOURCE_USERNAME: dbuser
+      SPRING_DATASOURCE_PASSWORD: 12345
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+    depends_on:
+      - db
+
+  gateway:
+    build:
+      context: gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SHAREIT_SERVER_URL: http://server:9090
+    depends_on:
+      - server
