@@ -218,11 +218,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private boolean hasUserBookedAndFinishedItem(Long userId, Long itemId, LocalDateTime now) {
-        //сорри, я не смог победить время. Я не понимаю, почему в базу букинги сохраняются не по UTC. Я делал всё что можно - сработало только это
-        LocalDateTime adjustedNow = now.plusHours(3);
-
         return bookingRepository.existsByBookerIdAndItemIdAndStatusAndEndBefore(
-                userId, itemId, Status.APPROVED, adjustedNow
+                userId, itemId, Status.APPROVED, now
         );
     }
 }
