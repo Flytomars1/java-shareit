@@ -18,14 +18,12 @@ class CommentDtoJsonTest {
 
     @Test
     void deserializeCommentDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "id": 1,
-                    "text": "Great item!",
-                    "authorName": "Author Name",
-                    "created": "2023-12-12T10:00:00"
-                }
-                """;
+        String json = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"text\": \"Great item!\",\n" +
+                "    \"authorName\": \"Author Name\",\n" +
+                "    \"created\": \"2023-12-12T10:00:00\"\n" +
+                "}";
 
         CommentDto result = objectMapper.readValue(json, CommentDto.class);
 

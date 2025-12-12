@@ -16,11 +16,9 @@ class ItemRequestCreateDtoJsonTest {
 
     @Test
     void deserializeItemRequestCreateDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "description": "Request description"
-                }
-                """;
+        String json = "{\n" +
+                "    \"description\": \"Request description\"\n" +
+                "}";
 
         ItemRequestCreateDto result = objectMapper.readValue(json, ItemRequestCreateDto.class);
 

@@ -16,16 +16,14 @@ class ItemDtoJsonTest {
 
     @Test
     void deserializeItemDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "id": 1,
-                    "name": "Item Name",
-                    "description": "Item Description",
-                    "available": true,
-                    "requestId": 2,
-                    "comments": []
-                }
-                """;
+        String json = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"name\": \"Item Name\",\n" +
+                "    \"description\": \"Item Description\",\n" +
+                "    \"available\": true,\n" +
+                "    \"requestId\": 2,\n" +
+                "    \"comments\": []\n" +
+                "}";
 
         ItemDto result = objectMapper.readValue(json, ItemDto.class);
 

@@ -16,13 +16,11 @@ class UserDtoJsonTest {
 
     @Test
     void deserializeUserDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "id": 1,
-                    "name": "John Doe",
-                    "email": "john@example.com"
-                }
-                """;
+        String json = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"name\": \"John Doe\",\n" +
+                "    \"email\": \"john@example.com\"\n" +
+                "}";
 
         UserDto result = objectMapper.readValue(json, UserDto.class);
 

@@ -19,25 +19,23 @@ class BookingDtoJsonTest {
 
     @Test
     void deserializeBookingDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "id": 1,
-                    "start": "2023-12-12T10:00:00",
-                    "end": "2023-12-12T11:00:00",
-                    "item": {
-                        "id": 1,
-                        "name": "Item Name",
-                        "description": "Item Description",
-                        "available": true
-                    },
-                    "booker": {
-                        "id": 2,
-                        "name": "Booker Name",
-                        "email": "booker@example.com"
-                    },
-                    "status": "WAITING"
-                }
-                """;
+        String json = "{\n" +
+                "    \"id\": 1,\n" +
+                "    \"start\": \"2023-12-12T10:00:00\",\n" +
+                "    \"end\": \"2023-12-12T11:00:00\",\n" +
+                "    \"item\": {\n" +
+                "        \"id\": 1,\n" +
+                "        \"name\": \"Item Name\",\n" +
+                "        \"description\": \"Item Description\",\n" +
+                "        \"available\": true\n" +
+                "    },\n" +
+                "    \"booker\": {\n" +
+                "        \"id\": 2,\n" +
+                "        \"name\": \"Booker Name\",\n" +
+                "        \"email\": \"booker@example.com\"\n" +
+                "    },\n" +
+                "    \"status\": \"WAITING\"\n" +
+                "}";
 
         BookingDto result = objectMapper.readValue(json, BookingDto.class);
 
