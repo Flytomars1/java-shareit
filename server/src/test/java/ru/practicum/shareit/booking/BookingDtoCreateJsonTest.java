@@ -18,13 +18,11 @@ class BookingDtoCreateJsonTest {
 
     @Test
     void deserializeBookingCreateDto_ShouldMapCorrectly() throws Exception {
-        String json = """
-                {
-                    "start": "2023-12-12T10:00:00",
-                    "end": "2023-12-12T11:00:00",
-                    "itemId": 1
-                }
-                """;
+        String json = "{\n" +
+                "    \"start\": \"2023-12-12T10:00:00\",\n" +
+                "    \"end\": \"2023-12-12T11:00:00\",\n" +
+                "    \"itemId\": 1\n" +
+                "}";
 
         BookingCreateDto result = objectMapper.readValue(json, BookingCreateDto.class);
 
